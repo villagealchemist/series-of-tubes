@@ -1,0 +1,55 @@
+{
+  "name": "villagealchemist",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "compile:tools": "tsc -p tsconfig.tools.json",
+    "build": "npm run compile:tools --silent && node .build-tools/scripts/build.js prepare && tsc -p tsconfig.browser.json && node .build-tools/scripts/build.js verify",
+    "dev": "npm run build && concurrently --kill-others-on-fail --names watch,server \"npm run dev:watch\" \"npm run dev:serve\"",
+    "dev:watch": "chokidar \"index.html\" \"styles.css\" \"_redirects\" \"art/index.html\" \"dev/index.html\" \"src/client/**/*.ts\" -c \"npm run build\"",
+    "dev:serve": "wrangler dev --port 42069",
+    "check:source": "npm run compile:tools --silent && node .build-tools/scripts/check-source.js",
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "npm run lint:check",
+    "lint:check": "eslint eslint.config.ts scripts src --max-warnings 0 --report-unused-disable-directives",
+    "lint:apply": "eslint eslint.config.ts scripts src --max-warnings 0 --report-unused-disable-directives --fix",
+    "format": "npm run format:apply",
+    "format:check": "prettier --check --ignore-unknown .",
+    "format:apply": "prettier --write --ignore-unknown .",
+    "check": "npm run check:source && npm run typecheck && npm run lint:check && npm run format:check && npm run build",
+    "precommit": "lint-staged && npm run check",
+    "prepare": "simple-git-hooks",
+    "deploy": "npm run build && wrangler deploy"
+  },
+  "devDependencies": {
+    "@types/node": "26.1.2",
+    "chokidar-cli": "3.0.0",
+    "concurrently": "10.0.4",
+    "eslint": "10.8.0",
+    "eslint-config-prettier": "10.1.8",
+    "jiti": "2.7.0",
+    "lint-staged": "17.3.0",
+    "prettier": "3.9.6",
+    "simple-git-hooks": "2.13.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.65.0",
+    "wrangler": "4.118.0"
+  },
+  "lint-staged": {
+    "./*.ts": [
+      "eslint --fix --max-warnings 0 --report-unused-disable-directives",
+      "prettier --write --ignore-unknown"
+    ],
+    "{scripts,src}/**/*.ts": [
+      "eslint --fix --max-warnings 0 --report-unused-disable-directives",
+      "prettier --write --ignore-unknown"
+    ],
+    "./*.{css,html,json,jsonc,md}": "prettier --write --ignore-unknown",
+    "{art,dev}/**/*.html": "prettier --write --ignore-unknown",
+    ".github/**/*.{yaml,yml}": "prettier --write --ignore-unknown"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "npm run precommit"
+  }
+}
