@@ -7,6 +7,7 @@ export default tseslint.config(
       ".build-tools/**",
       ".git/**",
       ".idea/**",
+      ".server-build/**",
       ".wrangler/**",
       "dist/**",
       "node_modules/**",

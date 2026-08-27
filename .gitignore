@@ -4,3 +4,7 @@ dist/
 node_modules/
 .wrangler/
 .build-tools/
+.server-build/
+.env
+.env.*
+!.env.discord.example
