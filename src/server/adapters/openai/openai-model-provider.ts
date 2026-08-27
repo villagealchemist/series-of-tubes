@@ -79,8 +79,7 @@ export function createOpenAiModelProvider(
 
 function createOpenAiRequestError(response: Response): Error {
   const requestId = response.headers.get("x-request-id");
-  const requestContext =
-    requestId === null ? "" : ` Request ID: ${requestId}.`;
+  const requestContext = requestId === null ? "" : ` Request ID: ${requestId}.`;
 
   return new Error(
     `OpenAI request failed with status ${response.status}.${requestContext}`,
@@ -98,10 +97,7 @@ function extractOutputText(responseBody: unknown): string {
     for (const content of item.content) {
       if (!isRecord(content)) continue;
 
-      if (
-        content.type === "output_text" &&
-        typeof content.text === "string"
-      ) {
+      if (content.type === "output_text" && typeof content.text === "string") {
         return content.text;
       }
 
