@@ -83,10 +83,7 @@ export function createDiscordRestClient(
   };
 }
 
-function createDiscordRequestError(
-  operation: string,
-  status: number,
-): Error {
+function createDiscordRequestError(operation: string, status: number): Error {
   return new Error(`Discord ${operation} failed with status ${status}.`);
 }
 
