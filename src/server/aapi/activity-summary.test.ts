@@ -15,6 +15,8 @@ await test("activity.summarize keeps provider output platform-neutral", async ()
       assert.equal(request.safetyIdentifier, "principal:mj");
       assert.match(request.instructions, /untrusted quoted material/u);
       assert.match(request.input, /hello from discord/u);
+      assert.doesNotMatch(request.input, /message-1/u);
+      assert.doesNotMatch(request.input, /channel-1/u);
 
       return Promise.resolve({
         value: {

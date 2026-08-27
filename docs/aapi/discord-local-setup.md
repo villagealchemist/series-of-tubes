@@ -11,7 +11,7 @@ contracts and it is not the public AAPI HTTP surface.
   messages into platform-neutral AAPI context items, and invokes the
   `activity.summarize` capability.
 - Uses the OpenAI Responses API through an AAPI-owned provider adapter.
-- Keeps provider-side response storage disabled.
+- Sets `store: false` on model-provider requests.
 - Restricts all commands to one configured Discord user plus explicit server
   and channel allowlists.
 - Does not expose Discord mutation tools.
@@ -88,6 +88,13 @@ Ed25519 signature before parsing the interaction.
 - `DISCORD_BOT_TOKEN`: Bot credential used for Discord REST calls.
 - `OPENAI_API_KEY`: Model-provider credential.
 - `OPENAI_MODEL`: Model ID. Defaults to `gpt-5.6-luna`.
+
+## Data boundary
+
+`/catch-up` sends only the selected messages' author labels, timestamps, text,
+and attachment filenames to the configured model provider. Discord resource
+IDs remain inside AAPI provenance and are not included in the model input. The
+adapter does not write raw Discord message content to application logs.
 
 ## Verification
 

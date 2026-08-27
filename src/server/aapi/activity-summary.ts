@@ -92,11 +92,9 @@ export async function summarizeActivity(
     audience: invocation.input.audience,
     objective: invocation.input.objective,
     activity: invocation.input.items.map((item) => ({
-      id: item.id,
       authorLabel: item.authorLabel,
       occurredAt: item.occurredAt,
       content: item.content,
-      source: item.source,
     })),
   });
 
