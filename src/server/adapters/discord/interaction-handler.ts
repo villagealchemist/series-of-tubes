@@ -225,9 +225,7 @@ function truncateContent(content: string, limit: number): string {
   if (content.length <= limit) return content;
   if (limit <= truncationMarker.length) return content.slice(0, limit);
 
-  return (
-    content.slice(0, limit - truncationMarker.length) + truncationMarker
-  );
+  return content.slice(0, limit - truncationMarker.length) + truncationMarker;
 }
 
 function createDiscordSourceReference(
