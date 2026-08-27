@@ -37,5 +37,11 @@ jobs:
       - name: Run source, type, test, lint, format, and build checks
         run: npm run check
 
+      - name: Show canonical formatting diff after a failed check
+        if: failure()
+        run: |
+          npm run format:apply
+          git diff --no-color -- . ":!package-lock.json"
+
       - name: Validate Cloudflare deployment boundary
         run: npm run deploy -- --dry-run
