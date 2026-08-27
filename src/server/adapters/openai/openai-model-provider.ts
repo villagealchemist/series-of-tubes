@@ -4,10 +4,15 @@ import type {
   StructuredModelProvider,
 } from "../../aapi/model-provider.js";
 
+const defaultRequestTimeoutMilliseconds = 60_000;
+const defaultMaxOutputTokens = 1200;
+
 export interface OpenAiModelProviderConfig {
   readonly apiKey: string;
   readonly model: string;
   readonly endpoint?: string;
+  readonly requestTimeoutMilliseconds?: number;
+  readonly maxOutputTokens?: number;
   readonly fetchImplementation?: typeof fetch;
 }
 
@@ -15,6 +20,9 @@ export function createOpenAiModelProvider(
   config: OpenAiModelProviderConfig,
 ): StructuredModelProvider {
   const endpoint = config.endpoint ?? "https://api.openai.com/v1/responses";
+  const requestTimeoutMilliseconds =
+    config.requestTimeoutMilliseconds ?? defaultRequestTimeoutMilliseconds;
+  const maxOutputTokens = config.maxOutputTokens ?? defaultMaxOutputTokens;
   const fetchImplementation = config.fetchImplementation ?? fetch;
 
   return {
@@ -31,10 +39,14 @@ export function createOpenAiModelProvider(
           model: config.model,
           store: false,
           safety_identifier: request.safetyIdentifier,
+          reasoning: {
+            effort: "low",
+          },
           instructions: request.instructions,
           input: request.input,
+          max_output_tokens: maxOutputTokens,
           text: {
-            verbosity: "medium",
+            verbosity: "low",
             format: {
               type: "json_schema",
               name: request.schemaName,
@@ -43,15 +55,14 @@ export function createOpenAiModelProvider(
             },
           },
         }),
+        signal: AbortSignal.timeout(requestTimeoutMilliseconds),
       });
-      const responseText = await response.text();
 
       if (!response.ok) {
-        throw new Error(
-          `OpenAI request failed with status ${response.status}: ${responseText.slice(0, 500)}`,
-        );
+        throw createOpenAiRequestError(response);
       }
 
+      const responseText = await response.text();
       const responseBody: unknown = JSON.parse(responseText);
       const outputText = extractOutputText(responseBody);
       const value: unknown = JSON.parse(outputText);
@@ -66,21 +77,36 @@ export function createOpenAiModelProvider(
   };
 }
 
+function createOpenAiRequestError(response: Response): Error {
+  const requestId = response.headers.get("x-request-id");
+  const requestContext =
+    requestId === null ? "" : ` Request ID: ${requestId}.`;
+
+  return new Error(
+    `OpenAI request failed with status ${response.status}.${requestContext}`,
+  );
+}
+
 function extractOutputText(responseBody: unknown): string {
-  if (!isRecord(responseBody) || !Array.isArray(responseBody.output)) {
+  if (!isRecord(responseBody) || !isUnknownArray(responseBody.output)) {
     throw new Error("OpenAI response did not include an output array.");
   }
 
   for (const item of responseBody.output) {
-    if (!isRecord(item) || !Array.isArray(item.content)) continue;
+    if (!isRecord(item) || !isUnknownArray(item.content)) continue;
 
     for (const content of item.content) {
+      if (!isRecord(content)) continue;
+
       if (
-        isRecord(content) &&
         content.type === "output_text" &&
         typeof content.text === "string"
       ) {
         return content.text;
+      }
+
+      if (content.type === "refusal") {
+        throw new Error("OpenAI refused the activity summary request.");
       }
     }
   }
@@ -90,4 +116,8 @@ function extractOutputText(responseBody: unknown): string {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isUnknownArray(value: unknown): value is unknown[] {
+  return Array.isArray(value);
 }

@@ -16,6 +16,7 @@ import type { DiscordRestClient } from "./discord-rest-client.js";
 import type {
   DiscordInteractionPlan,
   DiscordInteractionResponse,
+  DiscordMessage,
 } from "./discord-types.js";
 
 const interactionTypePing = 1;
@@ -24,6 +25,8 @@ const responseTypePong = 1;
 const responseTypeChannelMessage = 4;
 const responseTypeDeferredChannelMessage = 5;
 const ephemeralFlag = 64;
+const maxContextCharacters = 60_000;
+const truncationMarker = "\n[message truncated]";
 
 export interface DiscordInteractionHandlerConfig {
   readonly ownerPrincipalId: string;
@@ -87,17 +90,13 @@ export function planDiscordInteraction(
     return immediatePrivateMessage("That AAPI command is not registered.");
   }
 
-  if (
-    channelId === undefined ||
-    typeof payload.token !== "string" ||
-    payload.token.length === 0
-  ) {
+  const interactionToken = readOptionalString(payload, "token");
+  if (channelId === undefined || interactionToken === undefined) {
     return immediatePrivateMessage(
       "Discord did not provide the channel or interaction token.",
     );
   }
 
-  const interactionToken = payload.token;
   const limit = readLimit(data);
   const principal: AapiPrincipal = {
     id: config.ownerPrincipalId,
@@ -168,39 +167,67 @@ function immediatePrivateMessage(content: string): DiscordInteractionPlan {
 }
 
 function normalizeMessages(
-  messages: readonly {
-    readonly id: string;
-    readonly content: string;
-    readonly timestamp: string;
-    readonly authorLabel: string;
-    readonly attachmentNames: readonly string[];
-  }[],
+  messages: readonly DiscordMessage[],
   source: AapiSourceReference,
 ): readonly AapiContextItem[] {
-  return [...messages]
-    .reverse()
-    .map((message) => {
-      const attachmentContext = message.attachmentNames
-        .map((name) => `[attachment: ${name}]`)
-        .join(" ");
-      const content = [message.content, attachmentContext]
-        .filter((part) => part.length > 0)
-        .join("\n");
+  const selectedNewestFirst: AapiContextItem[] = [];
+  let remainingCharacters = maxContextCharacters;
 
-      return {
-        id: message.id,
-        authorLabel: message.authorLabel,
-        occurredAt: message.timestamp,
-        content,
-        source: {
-          provider: source.provider,
-          resourceType: "message",
-          resourceId: message.id,
-          parentResourceId: source.resourceId,
-        },
-      };
-    })
-    .filter((message) => message.content.length > 0);
+  for (const message of messages) {
+    const normalized = normalizeMessage(message, source);
+    if (normalized.content.length === 0) continue;
+    if (remainingCharacters <= 0) break;
+
+    if (normalized.content.length <= remainingCharacters) {
+      selectedNewestFirst.push(normalized);
+      remainingCharacters -= normalized.content.length;
+      continue;
+    }
+
+    if (selectedNewestFirst.length === 0) {
+      selectedNewestFirst.push({
+        ...normalized,
+        content: truncateContent(normalized.content, remainingCharacters),
+      });
+    }
+    break;
+  }
+
+  return selectedNewestFirst.reverse();
+}
+
+function normalizeMessage(
+  message: DiscordMessage,
+  source: AapiSourceReference,
+): AapiContextItem {
+  const attachmentContext = message.attachmentNames
+    .map((name) => `[attachment: ${name}]`)
+    .join(" ");
+  const content = [message.content, attachmentContext]
+    .filter((part) => part.length > 0)
+    .join("\n");
+
+  return {
+    id: message.id,
+    authorLabel: message.authorLabel,
+    occurredAt: message.timestamp,
+    content,
+    source: {
+      provider: source.provider,
+      resourceType: "message",
+      resourceId: message.id,
+      parentResourceId: source.resourceId,
+    },
+  };
+}
+
+function truncateContent(content: string, limit: number): string {
+  if (content.length <= limit) return content;
+  if (limit <= truncationMarker.length) return content.slice(0, limit);
+
+  return (
+    content.slice(0, limit - truncationMarker.length) + truncationMarker
+  );
 }
 
 function createDiscordSourceReference(
@@ -246,7 +273,7 @@ function readActorId(payload: Readonly<Record<string, unknown>>): string {
 
 function readLimit(data: Readonly<Record<string, unknown>>): number {
   const options = data.options;
-  if (!Array.isArray(options)) return 50;
+  if (!isUnknownArray(options)) return 50;
 
   for (const option of options) {
     if (
@@ -267,17 +294,22 @@ function readOptionalString(
   key: string,
 ): string | undefined {
   const candidate = value[key];
-  return typeof candidate === "string" ? candidate : undefined;
+  return typeof candidate === "string" && candidate.length > 0
+    ? candidate
+    : undefined;
 }
 
 function readString(
   value: Readonly<Record<string, unknown>>,
   key: string,
 ): string {
-  const candidate = value[key];
-  return typeof candidate === "string" ? candidate : "";
+  return readOptionalString(value, key) ?? "";
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isUnknownArray(value: unknown): value is unknown[] {
+  return Array.isArray(value);
 }

@@ -1,9 +1,12 @@
 import type { DiscordMessage } from "./discord-types.js";
 
+const defaultRequestTimeoutMilliseconds = 15_000;
+
 export interface DiscordRestClientConfig {
   readonly botToken: string;
   readonly applicationId: string;
   readonly apiBaseUrl?: string;
+  readonly requestTimeoutMilliseconds?: number;
   readonly fetchImplementation?: typeof fetch;
 }
 
@@ -22,6 +25,8 @@ export function createDiscordRestClient(
   config: DiscordRestClientConfig,
 ): DiscordRestClient {
   const apiBaseUrl = config.apiBaseUrl ?? "https://discord.com/api/v10";
+  const requestTimeoutMilliseconds =
+    config.requestTimeoutMilliseconds ?? defaultRequestTimeoutMilliseconds;
   const fetchImplementation = config.fetchImplementation ?? fetch;
 
   return {
@@ -35,18 +40,17 @@ export function createDiscordRestClient(
           headers: {
             Authorization: `Bot ${config.botToken}`,
           },
+          signal: AbortSignal.timeout(requestTimeoutMilliseconds),
         },
       );
-      const responseText = await response.text();
 
       if (!response.ok) {
-        throw new Error(
-          `Discord message request failed with status ${response.status}: ${responseText.slice(0, 500)}`,
-        );
+        throw createDiscordRequestError("message request", response.status);
       }
 
+      const responseText = await response.text();
       const body: unknown = JSON.parse(responseText);
-      if (!Array.isArray(body)) {
+      if (!isUnknownArray(body)) {
         throw new Error("Discord message response must be an array.");
       }
 
@@ -68,17 +72,22 @@ export function createDiscordRestClient(
             content,
             allowed_mentions: { parse: [] },
           }),
+          signal: AbortSignal.timeout(requestTimeoutMilliseconds),
         },
       );
 
       if (!response.ok) {
-        const responseText = await response.text();
-        throw new Error(
-          `Discord response update failed with status ${response.status}: ${responseText.slice(0, 500)}`,
-        );
+        throw createDiscordRequestError("response update", response.status);
       }
     },
   };
+}
+
+function createDiscordRequestError(
+  operation: string,
+  status: number,
+): Error {
+  return new Error(`Discord ${operation} failed with status ${status}.`);
 }
 
 function parseDiscordMessage(value: unknown): DiscordMessage {
@@ -103,7 +112,7 @@ function parseDiscordMessage(value: unknown): DiscordMessage {
       : username;
   const attachments = value.attachments;
 
-  if (!Array.isArray(attachments)) {
+  if (!isUnknownArray(attachments)) {
     throw new Error("Discord message attachments must be an array.");
   }
 
@@ -125,6 +134,10 @@ function parseDiscordMessage(value: unknown): DiscordMessage {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isUnknownArray(value: unknown): value is unknown[] {
+  return Array.isArray(value);
 }
 
 function readString(
