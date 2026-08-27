@@ -29,21 +29,31 @@ service, and repository boundaries.
 3. Install the app into the development server with the
    `applications.commands` and `bot` scopes.
 4. Grant only `View Channels` and `Read Message History` for the first slice.
-5. Copy `.env.discord.example` into a local secret-loading workflow and fill in
-   the IDs and secrets. Do not commit the populated file.
-6. Register the development-guild commands:
+5. Create the ignored local environment file:
 
 ```sh
-npm run discord:register
+cp .env.discord.example .env.discord
 ```
 
-7. Start the adapter:
+6. Fill `.env.discord` with the application IDs, allowlists, bot token, and
+   model-provider key. Never commit that file or paste its secrets into issues,
+   pull requests, or chat messages.
+7. Register the development-guild commands:
 
 ```sh
-npm run discord:start
+npm run discord:register:local
 ```
 
-8. Expose the local process through a public HTTPS endpoint and configure the
+8. Start the adapter:
+
+```sh
+npm run discord:start:local
+```
+
+The non-`local` script variants read environment variables injected by a
+process manager or deployment runtime instead of loading `.env.discord`.
+
+9. Expose the local process through a public HTTPS endpoint and configure the
    Discord Interactions Endpoint URL as:
 
 ```text
