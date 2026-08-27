@@ -24,25 +24,18 @@ export function loadDiscordRuntimeConfig(
     port: readPort(environment.PORT),
     ownerPrincipalId:
       readOptional(environment.AAPI_OWNER_PRINCIPAL_ID) ?? "principal:mj",
-    ownerDiscordUserId: readRequired(
-      environment,
-      "AAPI_OWNER_DISCORD_USER_ID",
-    ),
+    ownerDiscordUserId: readRequired(environment, "AAPI_OWNER_DISCORD_USER_ID"),
     allowedGuildIds: readCsvSet(
       readRequired(environment, "AAPI_ALLOWED_GUILD_IDS"),
     ),
     allowedChannelIds: readCsvSet(
       readRequired(environment, "AAPI_ALLOWED_CHANNEL_IDS"),
     ),
-    discordApplicationId: readRequired(
-      environment,
-      "DISCORD_APPLICATION_ID",
-    ),
+    discordApplicationId: readRequired(environment, "DISCORD_APPLICATION_ID"),
     discordBotToken: readRequired(environment, "DISCORD_BOT_TOKEN"),
     discordPublicKey: readRequired(environment, "DISCORD_PUBLIC_KEY"),
     openAiApiKey: readRequired(environment, "OPENAI_API_KEY"),
-    openAiModel:
-      readOptional(environment.OPENAI_MODEL) ?? "gpt-5.6-luna",
+    openAiModel: readOptional(environment.OPENAI_MODEL) ?? "gpt-5.6-luna",
   };
 }
 
@@ -50,10 +43,7 @@ export function loadDiscordRegistrationConfig(
   environment: NodeJS.ProcessEnv = process.env,
 ): DiscordRegistrationConfig {
   return {
-    discordApplicationId: readRequired(
-      environment,
-      "DISCORD_APPLICATION_ID",
-    ),
+    discordApplicationId: readRequired(environment, "DISCORD_APPLICATION_ID"),
     discordBotToken: readRequired(environment, "DISCORD_BOT_TOKEN"),
     developmentGuildId: readRequired(
       environment,
@@ -62,10 +52,7 @@ export function loadDiscordRegistrationConfig(
   };
 }
 
-function readRequired(
-  environment: NodeJS.ProcessEnv,
-  name: string,
-): string {
+function readRequired(environment: NodeJS.ProcessEnv, name: string): string {
   const value = readOptional(environment[name]);
   if (value === undefined) {
     throw new Error(`Missing required environment variable: ${name}`);

@@ -71,10 +71,7 @@ async function handleRequest(
     return;
   }
 
-  if (
-    request.method !== "POST" ||
-    request.url !== "/discord/interactions"
-  ) {
+  if (request.method !== "POST" || request.url !== "/discord/interactions") {
     writeJson(response, 404, { error: "not_found" });
     return;
   }

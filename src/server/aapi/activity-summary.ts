@@ -1,8 +1,4 @@
-import type {
-  AapiContextItem,
-  AapiInvocation,
-  AapiResult,
-} from "./models.js";
+import type { AapiContextItem, AapiInvocation, AapiResult } from "./models.js";
 import type { StructuredModelProvider } from "./model-provider.js";
 
 export interface ActivitySummaryInput {

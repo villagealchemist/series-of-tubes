@@ -32,8 +32,7 @@ export interface DiscordInteractionHandlerConfig {
   readonly allowedChannelIds: ReadonlySet<string>;
 }
 
-export interface DiscordInteractionHandlerDependencies
-  extends ActivitySummaryDependencies {
+export interface DiscordInteractionHandlerDependencies extends ActivitySummaryDependencies {
   readonly discordRestClient: DiscordRestClient;
 }
 
@@ -52,7 +51,9 @@ export function planDiscordInteraction(
   }
 
   if (interactionType !== interactionTypeApplicationCommand) {
-    return immediatePrivateMessage("That Discord interaction is not supported.");
+    return immediatePrivateMessage(
+      "That Discord interaction is not supported.",
+    );
   }
 
   const actorId = readActorId(payload);

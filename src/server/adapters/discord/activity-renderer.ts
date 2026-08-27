@@ -3,9 +3,7 @@ import type { ActivitySummaryOutput } from "../../aapi/activity-summary.js";
 const discordContentLimit = 2000;
 const safeContentLimit = 1900;
 
-export function renderActivitySummary(
-  summary: ActivitySummaryOutput,
-): string {
+export function renderActivitySummary(summary: ActivitySummaryOutput): string {
   const sections = [
     `## ${summary.headline}`,
     summary.overview,
