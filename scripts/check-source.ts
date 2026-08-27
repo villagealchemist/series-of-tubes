@@ -9,6 +9,7 @@ const excludedDirectories = new Set([
   ".build-tools",
   ".git",
   ".idea",
+  ".server-build",
   ".wrangler",
   "dist",
   "node_modules",
