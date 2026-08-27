@@ -53,11 +53,21 @@ npm run discord:start:local
 The non-`local` script variants read environment variables injected by a
 process manager or deployment runtime instead of loading `.env.discord`.
 
-9. Expose the local process through a public HTTPS endpoint and configure the
-   Discord Interactions Endpoint URL as:
+9. In a second terminal, install `cloudflared` and open a development-only
+   Quick Tunnel to the local adapter:
+
+```sh
+brew install cloudflared
+cloudflared tunnel --url http://localhost:3000
+```
+
+The command prints a temporary public HTTPS hostname. Quick Tunnel hostnames
+are for local testing only and may change whenever the tunnel restarts.
+
+10. Configure the Discord Interactions Endpoint URL using that hostname:
 
 ```text
-https://your-host.example/discord/interactions
+https://your-random-hostname.trycloudflare.com/discord/interactions
 ```
 
 Discord validates that URL by sending a signed `PING`. The adapter verifies the
