@@ -3,34 +3,36 @@ import test from "node:test";
 
 import { createOpenAiModelProvider } from "./openai-model-provider.js";
 
-test(
+await test(
   "OpenAI adapter requests structured output without provider storage",
   async () => {
     let requestBody: unknown;
     const provider = createOpenAiModelProvider({
       apiKey: "test-key",
       model: "gpt-5.6-luna",
-      fetchImplementation: async (_input, init) => {
+      fetchImplementation: (_input, init) => {
         requestBody =
           typeof init?.body === "string" ? JSON.parse(init.body) : undefined;
-        return new Response(
-          JSON.stringify({
-            output: [
-              {
-                type: "message",
-                content: [
-                  {
-                    type: "output_text",
-                    text: JSON.stringify({ answer: "hello" }),
-                  },
-                ],
-              },
-            ],
-          }),
-          {
-            status: 200,
-            headers: { "x-request-id": "req_test" },
-          },
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              output: [
+                {
+                  type: "message",
+                  content: [
+                    {
+                      type: "output_text",
+                      text: JSON.stringify({ answer: "hello" }),
+                    },
+                  ],
+                },
+              ],
+            }),
+            {
+              status: 200,
+              headers: { "x-request-id": "req_test" },
+            },
+          ),
         );
       },
     });

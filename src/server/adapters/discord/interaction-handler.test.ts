@@ -5,22 +5,22 @@ import type { StructuredModelProvider } from "../../aapi/model-provider.js";
 import type { DiscordRestClient } from "./discord-rest-client.js";
 import { planDiscordInteraction } from "./interaction-handler.js";
 
-test("rejects non-owner Discord users before invoking AAPI", async () => {
+await test("rejects non-owner Discord users before invoking AAPI", () => {
   const modelProvider: StructuredModelProvider = {
-    async generateStructured() {
-      throw new Error("Provider should not be called.");
+    generateStructured() {
+      return Promise.reject(new Error("Provider should not be called."));
     },
   };
   const discordRestClient: DiscordRestClient = {
-    async getChannelMessages() {
-      throw new Error("Discord should not be called.");
+    getChannelMessages() {
+      return Promise.reject(new Error("Discord should not be called."));
     },
-    async editOriginalInteractionResponse() {
-      throw new Error("Discord should not be called.");
+    editOriginalInteractionResponse() {
+      return Promise.reject(new Error("Discord should not be called."));
     },
   };
 
-  const plan = await planDiscordInteraction(
+  const plan = planDiscordInteraction(
     {
       type: 2,
       guild_id: "guild-1",
@@ -46,14 +46,14 @@ test("rejects non-owner Discord users before invoking AAPI", async () => {
   assert.equal(plan.afterResponse, undefined);
 });
 
-test(
+await test(
   "catch-up defers privately and executes a generic activity summary",
   async () => {
     let editedContent = "";
     const modelProvider: StructuredModelProvider = {
-      async generateStructured(request) {
+      generateStructured(request) {
         assert.match(request.input, /A real message/u);
-        return {
+        return Promise.resolve({
           value: {
             headline: "Caught up",
             overview: "One meaningful message.",
@@ -62,14 +62,14 @@ test(
             followUps: [],
             safeToIgnore: [],
           },
-        };
+        });
       },
     };
     const discordRestClient: DiscordRestClient = {
-      async getChannelMessages(channelId, limit) {
+      getChannelMessages(channelId, limit) {
         assert.equal(channelId, "channel-1");
         assert.equal(limit, 25);
-        return [
+        return Promise.resolve([
           {
             id: "message-1",
             content: "A real message",
@@ -77,14 +77,15 @@ test(
             authorLabel: "Pat",
             attachmentNames: [],
           },
-        ];
+        ]);
       },
-      async editOriginalInteractionResponse(_token, content) {
+      editOriginalInteractionResponse(_token, content) {
         editedContent = content;
+        return Promise.resolve();
       },
     };
 
-    const plan = await planDiscordInteraction(
+    const plan = planDiscordInteraction(
       {
         type: 2,
         guild_id: "guild-1",

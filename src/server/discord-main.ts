@@ -25,7 +25,7 @@ interface RequestDependencies {
   readonly discordRestClient: DiscordRestClient;
 }
 
-async function main(): Promise<void> {
+function main(): void {
   const config = loadDiscordRuntimeConfig();
   const modelProvider = createOpenAiModelProvider({
     apiKey: config.openAiApiKey,
@@ -98,7 +98,7 @@ async function handleRequest(
   }
 
   const payload: unknown = JSON.parse(rawBody);
-  const plan = await planDiscordInteraction(
+  const plan = planDiscordInteraction(
     payload,
     {
       ownerPrincipalId: dependencies.config.ownerPrincipalId,
@@ -157,7 +157,9 @@ function writeJson(
   response.end(JSON.stringify(body));
 }
 
-void main().catch((error: unknown) => {
+try {
+  main();
+} catch (error: unknown) {
   console.error("AAPI Discord adapter failed to start.", error);
   process.exitCode = 1;
-});
+}

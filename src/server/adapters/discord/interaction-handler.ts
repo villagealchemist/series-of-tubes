@@ -37,11 +37,11 @@ export interface DiscordInteractionHandlerDependencies
   readonly discordRestClient: DiscordRestClient;
 }
 
-export async function planDiscordInteraction(
+export function planDiscordInteraction(
   payload: unknown,
   config: DiscordInteractionHandlerConfig,
   dependencies: DiscordInteractionHandlerDependencies,
-): Promise<DiscordInteractionPlan> {
+): DiscordInteractionPlan {
   if (!isRecord(payload)) {
     return immediatePrivateMessage("Discord sent an invalid interaction.");
   }
