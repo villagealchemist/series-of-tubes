@@ -1,8 +1,11 @@
 .build-tools
+.build-api
+.generated
 .git
 .idea
 .wrangler
 dist
 node_modules
 package-lock.json
+docs/generated
 sites/jux

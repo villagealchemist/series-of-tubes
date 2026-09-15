@@ -15,8 +15,9 @@ Linktree was available. So was building exactly one tiny thing correctly.
 
 ## The tiny internet workshop
 
-**Current reality:** a fast, static link hub with four public routes and several useful exits into the wider series of
-tubes.
+**Current reality:** a fast static link hub plus the first local AAPI vertical slice: a model-agnostic, contract-first
+gateway with generated OpenAPI documentation, generated request validation, MCCP capability discovery, deterministic
+Port Authority decisions, and auditable receipts.
 
 Visitors can find MJ's GitHub, LinkedIn, resumé, two Instagram workshops, and contact address. The `/dev` and `/art`
 doors steer visitors toward the relevant part of the main page, while `/links` provides a dedicated route to the same
@@ -35,8 +36,10 @@ HTML, CSS, and a little precise browser behavior do the work just fine.
 | ------------------- | ------------------------------------------------------------------------------------------- |
 | Static HTML         | Provides the page, route documents, metadata, semantic structure, and real links.           |
 | CSS                 | Owns the responsive plum-black, lilac, silver, serif-meets-monospace workshop aesthetic.    |
-| Strict TypeScript   | Powers browser behavior, configuration, deterministic builds, and source-policy validation. |
+| Strict TypeScript   | Powers browser behavior, API contracts, deterministic builds, and source-policy validation. |
 | TypeScript compiler | Emits the browser-compatible files and the temporary build tools.                           |
+| TSOA + Express      | Generate the AAPI routes, request validation, OpenAPI contract, and local HTTP boundary.    |
+| Swagger UI          | Serves the generated developer reference at `/docs`; no handwritten API specification.      |
 | Wrangler            | Serves and deploys the verified static assets through Cloudflare Workers Static Assets.     |
 | Cloudflare          | Sends the finished little website into the series of tubes.                                 |
 
@@ -83,6 +86,13 @@ The build never sweeps the repository for whatever looks publishable. Every depl
 | `src/client/config.ts`    | Typed public browser configuration, including the contact email address.                  |
 | `src/client/site.ts`      | Contact-link hydration plus query-driven scrolling for the technical and creative views.  |
 | `src/client/redirect.ts`  | Shared browser fallback for the redirect documents.                                       |
+| `src/api/contracts/`      | Accepted MCCP capability registry and transport-independent semantic contracts.           |
+| `src/api/controllers/`    | Thin TSOA HTTP controllers.                                                               |
+| `src/api/services/`       | Contract lookup, policy evaluation, and proposal orchestration.                           |
+| `src/api/repositories/`   | Persistence boundaries, currently backed by an explicit in-memory receipt repository.     |
+| `src/api/providers/`      | Model-neutral contract proposal provider boundary.                                        |
+| `tsoa.json`               | Generated route and OpenAPI configuration.                                                |
+| `docs/AAPI.md`            | AAPI architecture, trust boundaries, endpoints, and continuation contract.                |
 | `scripts/build.ts`        | Allowlisted copy, clean build preparation, and exact output verification.                 |
 | `scripts/check-source.ts` | Authored-source and tracked-file policy enforcement.                                      |
 | `tsconfig.json`           | Strict, no-emit TypeScript contract for the whole authored codebase.                      |
@@ -125,6 +135,12 @@ Every npm script in `package.json`, including the smaller incantations used by t
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | `npm run compile:tools` | Compiles `scripts/**/*.ts` into ignored `.build-tools` output.                                                                           |
 | `npm run build`         | Compiles the tools, cleans and prepares the allowlisted static files, emits browser JavaScript, then verifies the exact `dist` manifest. |
+| `npm run api:generate`  | Generates Express routes and the OpenAPI 3.0 contract directly from TypeScript controllers and named models.                             |
+| `npm run api:build`     | Regenerates the API contract and compiles the AAPI server into ignored `.build-api` output.                                              |
+| `npm run api:dev`       | Regenerates the contract and runs the AAPI locally with reload behavior.                                                                 |
+| `npm run api:start`     | Builds and starts the AAPI on `127.0.0.1:42100` by default.                                                                              |
+| `npm test`              | Regenerates routes and runs the AAPI domain and HTTP-boundary tests.                                                                     |
+| `npm run build:all`     | Builds both the existing static site and the AAPI.                                                                                       |
 | `npm run dev`           | Builds first, then runs the file watcher and local Wrangler server together; either failing process stops the pair.                      |
 | `npm run dev:watch`     | Watches the explicit authored site files and runs a full build when one changes.                                                         |
 | `npm run dev:serve`     | Serves `dist` through `wrangler dev` on port `42069`.                                                                                    |
@@ -151,6 +167,12 @@ This small site has a surprisingly serious perimeter. That is the fun part.
   suppressions, and the forbidden Unicode code point U+2014.
 - **Canonical-source boundary:** generated directories, dependencies, editor state, lockfiles, and deployment artifacts are
   excluded from authored-source scans where appropriate. Generated browser JavaScript cannot become canonical source.
+- **Generated API parity:** TSOA generates both request validation and OpenAPI from the same TypeScript controllers and named
+  boundary models. Unknown request fields fail with a structured HTTP 422 response.
+- **Model-neutral core:** the AAPI runs, documents contracts, and evaluates policies without a model credential. A model may
+  propose an untrusted contract through the provider interface, but cannot accept a contract or authorize an invocation.
+- **Receipts and tenancy:** every evaluated invocation records the workspace, actor, capability, resource, purpose, policy
+  revision, contract revision, decision, and reason. Cross-workspace access is denied before any action can execute.
 - **Deterministic allowlist:** every build deletes `dist`, copies a fixed set of static inputs, emits three known browser
   files, and verifies the complete nine-file output manifest.
 - **Route verification:** the expected manifest requires the root, links, dev, and art route assets to exist in the
@@ -210,14 +232,15 @@ These are implementation facts, not a decorative accessibility badge or an unsup
 
 ## Currently in the cauldron
 
-| State       | Work                                                                                                                                                                                                            |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Shipped     | The static, hand-built link-hub phase documented here.                                                                                                                                                          |
-| Brewing     | A fuller villagealchemist internet home. No invented milestone dates, just active conjuring.                                                                                                                    |
-| Future only | If API work begins, the engineering contract calls for TSOA-generated routes and OpenAPI, a Controllers to Services to Repositories architecture, named request and response models, and Swagger UI at `/docs`. |
+| State       | Work                                                                                                                                                   |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Shipped     | The static, hand-built link hub and the first local AAPI contract, validation, policy, and receipt slice.                                              |
+| Brewing     | Durable repositories, authenticated workspace identity, additional domain commands, and transport adapters that reuse the same contracts and services. |
+| Future only | Production API deployment, generalized autonomy, and provider-specific model adapters beyond the model-neutral proposal boundary.                      |
 
-There is **currently no API, database, TSOA application, generated OpenAPI specification, or Swagger UI**. Those are
-future architecture requirements, not features wearing a fake mustache.
+The AAPI is intentionally local and uses an in-memory receipt repository in this slice. The existing Wrangler deployment
+still publishes only the verified static site. No database, production API, external model call, or API credential has been
+added or implied.
 
 ## Find MJ around the tubes
 

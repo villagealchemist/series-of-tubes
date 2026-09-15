@@ -5,10 +5,13 @@ export default tseslint.config(
   {
     ignores: [
       ".build-tools/**",
+      ".build-api/**",
+      ".generated/**",
       ".git/**",
       ".idea/**",
       ".wrangler/**",
       "dist/**",
+      "docs/generated/**",
       "node_modules/**",
       "sites/**",
     ],

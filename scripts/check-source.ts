@@ -7,10 +7,13 @@ const root = process.cwd();
 const run = promisify(execFile);
 const excludedDirectories = new Set([
   ".build-tools",
+  ".build-api",
+  ".generated",
   ".git",
   ".idea",
   ".wrangler",
   "dist",
+  "docs/generated",
   "node_modules",
   "sites",
 ]);
