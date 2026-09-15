@@ -6,24 +6,33 @@
   "scripts": {
     "compile:tools": "tsc -p tsconfig.tools.json",
     "build": "npm run compile:tools --silent && node .build-tools/scripts/build.js prepare && tsc -p tsconfig.browser.json && node .build-tools/scripts/build.js verify",
+    "build:all": "npm run build && npm run api:build",
+    "api:generate": "tsoa spec-and-routes",
+    "api:build": "npm run api:generate --silent && tsc -p tsconfig.api.json",
+    "api:dev": "npm run api:generate --silent && tsx watch src/api/server.ts",
+    "api:start": "npm run api:build --silent && node .build-api/src/api/server.js",
     "dev": "npm run build && concurrently --kill-others-on-fail --names watch,server \"npm run dev:watch\" \"npm run dev:serve\"",
     "dev:watch": "chokidar \"index.html\" \"styles.css\" \"_redirects\" \"art/index.html\" \"dev/index.html\" \"src/client/**/*.ts\" -c \"npm run build\"",
     "dev:serve": "wrangler dev --port 42069",
     "check:source": "npm run compile:tools --silent && node .build-tools/scripts/check-source.js",
-    "typecheck": "tsc -p tsconfig.json",
+    "typecheck": "npm run api:generate --silent && tsc -p tsconfig.json && tsc -p tsconfig.api.json --noEmit",
     "lint": "npm run lint:check",
     "lint:check": "eslint eslint.config.ts scripts src --max-warnings 0 --report-unused-disable-directives",
     "lint:apply": "eslint eslint.config.ts scripts src --max-warnings 0 --report-unused-disable-directives --fix",
     "format": "npm run format:apply",
     "format:check": "prettier --check --ignore-unknown .",
     "format:apply": "prettier --write --ignore-unknown .",
-    "check": "npm run check:source && npm run typecheck && npm run lint:check && npm run format:check && npm run build",
+    "test": "npm run api:generate --silent && vitest run",
+    "check": "npm run check:source && npm run typecheck && npm run lint:check && npm run format:check && npm run test && npm run build:all",
     "precommit": "lint-staged && npm run check",
     "prepare": "simple-git-hooks",
     "deploy": "npm run build && wrangler deploy"
   },
   "devDependencies": {
+    "@types/express": "5.0.6",
     "@types/node": "26.1.2",
+    "@types/supertest": "7.2.1",
+    "@types/swagger-ui-express": "4.1.8",
     "chokidar-cli": "3.0.0",
     "concurrently": "10.0.4",
     "eslint": "10.8.0",
@@ -32,8 +41,11 @@
     "lint-staged": "17.3.0",
     "prettier": "3.9.6",
     "simple-git-hooks": "2.13.1",
+    "supertest": "7.2.2",
+    "tsx": "4.23.13",
     "typescript": "6.0.3",
     "typescript-eslint": "8.65.0",
+    "vitest": "5.0.1",
     "wrangler": "4.118.0"
   },
   "lint-staged": {
@@ -51,5 +63,14 @@
   },
   "simple-git-hooks": {
     "pre-commit": "npm run precommit"
+  },
+  "dependencies": {
+    "express": "5.2.1",
+    "joi": "18.2.9",
+    "swagger-ui-express": "5.0.1",
+    "tsoa": "6.6.0"
+  },
+  "overrides": {
+    "ts-deepmerge": "8.0.0"
   }
 }

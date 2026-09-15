@@ -4,3 +4,5 @@ dist/
 node_modules/
 .wrangler/
 .build-tools/
+.build-api/
+.generated/

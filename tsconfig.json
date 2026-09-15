@@ -18,7 +18,15 @@
     "noEmit": true,
     "allowJs": false,
     "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": false
+    "skipLibCheck": false,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
-  "include": ["eslint.config.ts", "src/**/*.ts", "scripts/**/*.ts"]
+  "include": [
+    "eslint.config.ts",
+    "vitest.config.ts",
+    "src/**/*.ts",
+    "scripts/**/*.ts"
+  ]
 }

@@ -1,0 +1,644 @@
+{
+	"openapi": "3.0.0",
+	"components": {
+		"examples": {},
+		"headers": {},
+		"parameters": {},
+		"requestBodies": {},
+		"responses": {},
+		"schemas": {
+			"HealthResponse": {
+				"properties": {
+					"status": {
+						"type": "string",
+						"enum": [
+							"ok"
+						],
+						"nullable": false
+					},
+					"service": {
+						"type": "string",
+						"enum": [
+							"aapi"
+						],
+						"nullable": false
+					},
+					"contractRevision": {
+						"type": "string"
+					},
+					"documentationPath": {
+						"type": "string",
+						"enum": [
+							"/docs"
+						],
+						"nullable": false
+					}
+				},
+				"required": [
+					"status",
+					"service",
+					"contractRevision",
+					"documentationPath"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"PortDecision": {
+				"type": "string",
+				"enum": [
+					"ALLOW",
+					"ASK",
+					"DENY"
+				]
+			},
+			"DecisionReceipt": {
+				"properties": {
+					"receiptId": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"workspaceId": {
+						"type": "string"
+					},
+					"actorId": {
+						"type": "string"
+					},
+					"capabilityId": {
+						"type": "string"
+					},
+					"resourceId": {
+						"type": "string"
+					},
+					"purpose": {
+						"type": "string"
+					},
+					"idempotencyKey": {
+						"type": "string"
+					},
+					"decision": {
+						"$ref": "#/components/schemas/PortDecision"
+					},
+					"reasonCodes": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"policyRevision": {
+						"type": "string"
+					},
+					"contractRevision": {
+						"type": "string"
+					},
+					"recordedAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"receiptId",
+					"workspaceId",
+					"actorId",
+					"capabilityId",
+					"resourceId",
+					"purpose",
+					"idempotencyKey",
+					"decision",
+					"reasonCodes",
+					"policyRevision",
+					"contractRevision",
+					"recordedAt"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"DecisionResponse": {
+				"properties": {
+					"decision": {
+						"$ref": "#/components/schemas/PortDecision"
+					},
+					"receipt": {
+						"$ref": "#/components/schemas/DecisionReceipt"
+					}
+				},
+				"required": [
+					"decision",
+					"receipt"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"FieldError": {
+				"properties": {
+					"path": {
+						"type": "string"
+					},
+					"message": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"path",
+					"message"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ValidationErrorResponse": {
+				"properties": {
+					"code": {
+						"type": "string",
+						"enum": [
+							"VALIDATION_FAILED"
+						],
+						"nullable": false
+					},
+					"message": {
+						"type": "string"
+					},
+					"fields": {
+						"items": {
+							"$ref": "#/components/schemas/FieldError"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"code",
+					"message",
+					"fields"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ActorReference": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "Stable actor identifier.",
+						"minLength": 1,
+						"maxLength": 128
+					},
+					"workspaceId": {
+						"type": "string",
+						"description": "Workspace in which the actor is currently operating.",
+						"minLength": 1,
+						"maxLength": 128
+					}
+				},
+				"required": [
+					"id",
+					"workspaceId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ResourceVisibility": {
+				"type": "string",
+				"enum": [
+					"public",
+					"workspace",
+					"private"
+				]
+			},
+			"ResourceReference": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "Stable resource identifier.",
+						"minLength": 1,
+						"maxLength": 256
+					},
+					"workspaceId": {
+						"type": "string",
+						"description": "Workspace that owns the resource.",
+						"minLength": 1,
+						"maxLength": 128
+					},
+					"visibility": {
+						"$ref": "#/components/schemas/ResourceVisibility"
+					}
+				},
+				"required": [
+					"id",
+					"workspaceId",
+					"visibility"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"EvaluateDecisionRequest": {
+				"properties": {
+					"actor": {
+						"$ref": "#/components/schemas/ActorReference"
+					},
+					"resource": {
+						"$ref": "#/components/schemas/ResourceReference"
+					},
+					"capabilityId": {
+						"type": "string",
+						"description": "MCCP capability identifier requested by the actor.",
+						"minLength": 1,
+						"maxLength": 128,
+						"pattern": "^[a-z][a-z0-9.]*$"
+					},
+					"purpose": {
+						"type": "string",
+						"description": "Human-readable reason for this invocation.",
+						"minLength": 3,
+						"maxLength": 1000
+					},
+					"idempotencyKey": {
+						"type": "string",
+						"description": "Caller-generated key used to make evaluation and receipt creation idempotent.",
+						"minLength": 8,
+						"maxLength": 128,
+						"pattern": "^[A-Za-z0-9._:-]+$"
+					}
+				},
+				"required": [
+					"actor",
+					"resource",
+					"capabilityId",
+					"purpose",
+					"idempotencyKey"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CapabilityEffect": {
+				"type": "string",
+				"enum": [
+					"read",
+					"write",
+					"external"
+				]
+			},
+			"MccpCapabilityContract": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "Stable semantic identifier used by every transport projection."
+					},
+					"title": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					},
+					"effect": {
+						"$ref": "#/components/schemas/CapabilityEffect"
+					},
+					"allowedResourceVisibilities": {
+						"items": {
+							"$ref": "#/components/schemas/ResourceVisibility"
+						},
+						"type": "array"
+					},
+					"requiresHumanApproval": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"id",
+					"title",
+					"description",
+					"effect",
+					"allowedResourceVisibilities",
+					"requiresHumanApproval"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"MccpContractManifest": {
+				"properties": {
+					"protocol": {
+						"type": "string",
+						"enum": [
+							"MCCP"
+						],
+						"nullable": false
+					},
+					"revision": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					},
+					"capabilities": {
+						"items": {
+							"$ref": "#/components/schemas/MccpCapabilityContract"
+						},
+						"type": "array"
+					},
+					"projections": {
+						"items": {
+							"type": "string",
+							"enum": [
+								"REST",
+								"MCP",
+								"WebMCP"
+							]
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"protocol",
+					"revision",
+					"description",
+					"capabilities",
+					"projections"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ContractManifestResponse": {
+				"$ref": "#/components/schemas/MccpContractManifest"
+			},
+			"CapabilityContractResponse": {
+				"$ref": "#/components/schemas/MccpCapabilityContract"
+			},
+			"ErrorResponse": {
+				"properties": {
+					"code": {
+						"type": "string"
+					},
+					"message": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"code",
+					"message"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ContractProposal": {
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"purpose": {
+						"type": "string"
+					},
+					"capabilities": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"name",
+					"purpose",
+					"capabilities"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ContractProposalResponse": {
+				"properties": {
+					"providerId": {
+						"type": "string"
+					},
+					"modelId": {
+						"type": "string"
+					},
+					"proposal": {
+						"$ref": "#/components/schemas/ContractProposal"
+					}
+				},
+				"required": [
+					"providerId",
+					"proposal"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CreateContractProposalRequest": {
+				"properties": {
+					"description": {
+						"type": "string",
+						"description": "Natural-language description of the desired agent behavior.",
+						"minLength": 20,
+						"maxLength": 4000
+					}
+				},
+				"required": [
+					"description"
+				],
+				"type": "object",
+				"additionalProperties": false
+			}
+		},
+		"securitySchemes": {}
+	},
+	"info": {
+		"title": "AAPI",
+		"version": "0.1.0",
+		"description": "A model-agnostic, contract-first gateway for governed agentic capabilities.",
+		"contact": {}
+	},
+	"paths": {
+		"/v0/health": {
+			"get": {
+				"operationId": "GetHealth",
+				"responses": {
+					"200": {
+						"description": "AAPI is ready",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HealthResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Report whether the AAPI process and contract registry are available.",
+				"tags": [
+					"System"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/v0/workspaces/{workspaceId}/decisions/evaluate": {
+			"post": {
+				"operationId": "Evaluate",
+				"responses": {
+					"200": {
+						"description": "Policy decision and receipt",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/DecisionResponse"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Request validation failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Evaluate one capability invocation before execution and persist an auditable receipt.\nThis endpoint evaluates policy only. It does not execute the requested action.",
+				"tags": [
+					"Port Authority"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "workspaceId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/EvaluateDecisionRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/v0/contracts": {
+			"get": {
+				"operationId": "GetManifest",
+				"responses": {
+					"200": {
+						"description": "Accepted contract manifest",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ContractManifestResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Return the accepted transport-independent MCCP contract registry.",
+				"tags": [
+					"MCCP contracts"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/v0/contracts/{capabilityId}": {
+			"get": {
+				"operationId": "GetCapability",
+				"responses": {
+					"200": {
+						"description": "Capability contract",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CapabilityContractResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Capability contract not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Return one capability contract by its stable semantic identifier.",
+				"tags": [
+					"MCCP contracts"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "capabilityId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/v0/contracts/proposals": {
+			"post": {
+				"operationId": "CreateProposal",
+				"responses": {
+					"200": {
+						"description": "Untrusted contract proposal",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ContractProposalResponse"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Request validation failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationErrorResponse"
+								}
+							}
+						}
+					},
+					"503": {
+						"description": "No proposal provider configured",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Ask the configured model adapter to draft an MCCP contract proposal.\nProposals are untrusted drafts and never become accepted contracts automatically.",
+				"tags": [
+					"MCCP contracts"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateContractProposalRequest"
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"servers": [
+		{
+			"url": "/api"
+		}
+	]
+}
